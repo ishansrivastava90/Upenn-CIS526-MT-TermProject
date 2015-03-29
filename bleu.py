@@ -1,6 +1,5 @@
 import math
 from collections import Counter
-from operator import add
 # Collect BLEU-relevant statistics for a single hypothesis/ multiple references pair.
 # Return value is a generator yielding:
 # (c, r, numerator1, denominator1, ... numerator4, denominator4)
