@@ -1,0 +1,17 @@
+Score each candidate sentence based on weights. Can implement both PRO and MERT for this.
+
+Default
+Use nltk english corpus, score each sentence based on language model score.
+
+Baseline
+Implement PRO, set constant seed for constant results. Just output the weights
+
+Extensions
+Use MERT
+Feature engineering
+Worker metadata scoring
+Sentence generation
+
+Ideas
+Deduce if more sentences needed
+Worker reccomendation
