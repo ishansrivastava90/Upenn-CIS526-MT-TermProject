@@ -17,11 +17,12 @@ def compute_bleu(hyp, refs):
   return bleu.bleu(stats)
 
 optparser = optparse.OptionParser()
-optparser.add_option("-r", "--reference", dest="reference", default="data/dev.ref", help="Target language reference sentences")
+optparser.add_option("-r", "--reference", dest="reference", default="../../data/LDCtranslations.tsv", help="Target language reference sentences")
 (opts,_) = optparser.parse_args()
 
 # ref assumes references to be in tab separated format, all references for the same sentence to be in same line
-ref = [[reference.strip().split() for reference in line.split(delim)] for line in open(opts.reference)]
+ref = [[ reference.strip().split() for reference in line.split(delim)[1:] ] for line in open(opts.reference)]
+ref = ref[1:];
 hyp = [line.strip().split() for line in sys.stdin]
 
 print compute_bleu(hyp, ref)
