@@ -3,7 +3,7 @@
 #############################################################
 ## Default System.
 ## Outputs the sentence with the best LM score.
-
+## BLEU score : 0.1988
 import optparse
 from numpy import argmax
 
