@@ -15,3 +15,5 @@ Sentence generation
 Ideas
 Deduce if more sentences needed
 Worker reccomendation
+
+ABC
