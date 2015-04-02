@@ -7,10 +7,10 @@ Baseline
 Implement PRO, set constant seed for constant results. Just output the weights
 
 Extensions
-Use MERT
-Feature engineering
-Worker metadata scoring
-Sentence generation
+Use MERT - Use Ishan's code
+Feature engineering - Aayushi
+Worker metadata scoring - More sentences?
+Sentence generation - Is it feasible?
 
 Ideas
 Deduce if more sentences needed
