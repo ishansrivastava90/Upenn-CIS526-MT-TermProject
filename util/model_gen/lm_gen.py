@@ -52,8 +52,7 @@ def get_srilm_ppl_for_sen(lm_file, sen):
     fobj.write(sen)
     fobj.close()
 
-    command_output= check_output([NGRAM, "-lm", lm_file, "-ppl","temp_translation_file.txt"])
-    print command_output
+    command_output= check_output([NGRAM, "-unk","-lm", lm_file, "-ppl","temp_translation_file.txt"])
 
     for ind,word in enumerate(command_output.split()):
         if word == 'ppl=':
@@ -73,8 +72,7 @@ def get_srilm_logprob_for_sen(lm_file, sen):
     fobj.write(sen)
     fobj.close()
 
-    command_output= check_output([NGRAM, "-lm", lm_file, "-ppl","temp_translation_file.txt"])
-    print command_output
+    command_output= check_output([NGRAM, "-unk", "-lm", lm_file, "-ppl","temp_translation_file.txt"])
 
     for ind,word in enumerate(command_output.split()):
         if word == 'logprob=':

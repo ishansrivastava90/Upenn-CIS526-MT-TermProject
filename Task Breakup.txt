@@ -13,5 +13,7 @@ Worker metadata scoring - More sentences?
 Sentence generation - Is it feasible?
 
 Ideas
-Deduce if more sentences needed - Given more sentences would this be more feasible?
-Worker reccommendation - More of a system level thing. Don't think this can be used
+Deduce if more sentences needed
+Worker reccomendation
+
+ABC
