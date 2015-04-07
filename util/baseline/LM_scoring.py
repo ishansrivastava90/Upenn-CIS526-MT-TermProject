@@ -3,7 +3,7 @@
 import optparse
 from numpy import argmax,argmin,mean
 from nltk import word_tokenize;
-import models,editdistance
+import editdistance
 
 optparser = optparse.OptionParser()
 optparser.add_option("-i", "--input", dest="input", default="../../data/turk_translations_w_logprob_eurparl.tsv", help="MTurk translations file with language model probabilities")
