@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
-## Outputs the sentence with the best average Levenshtein distance with its fellow translations.
-## Here we used words as entities rather than characters in the string while calculating Levenshtein distance.
+"""
+- Uses Edit distances per word of every translation and chooses the one which is closes to every other
+translation as the best one 
+- Outputs the sentence with the best average Levenshtein distance with its fellow translations.
+- Here we used words as entities rather than characters in the string while calculating Levenshtein distance.
+
 ## BLEU score : 0.29
+"""
+
 import optparse
 from numpy import argmin,mean
 from nltk import word_tokenize;
