@@ -1,20 +1,21 @@
+#!/usr/bin/env python
+
 ## Outputs the sentence with the best LM score.
-## BLEU score : 0.216
+## BLEU score : 0.2462
 import optparse
 from numpy import argmax,argmin,mean
 from nltk import word_tokenize;
-import editdistance
 from math import exp
 
 optparser = optparse.OptionParser()
-optparser.add_option("-i", "--input", dest="input", default="../../data/turk_translations_w_logprob_eurparl.tsv", help="MTurk translations file with language model probabilities")
+optparser.add_option("-i", "--input", dest="input", default="../../data/turk_translations_w_logprob_eurparl_2.tsv", help="MTurk translations file with language model probabilities")
 
 
 opts = optparser.parse_args()[0]
 
 
-wbp = 0.0 ;
-wtp = 1.0;
+wbp = 0.1 ;
+wtp = 0.9;
 
 all_hyps = [line.split('\t')[2:] for line in open(opts.input)]
 
