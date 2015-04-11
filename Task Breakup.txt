@@ -1,19 +1,23 @@
-Score each candidate sentence based on weights. Can implement both PRO and MERT for this.
-
-Default
-Use nltk english corpus, score each sentence based on language model score.
-
-Baseline
-Implement PRO, set constant seed for constant results. Just output the weights
-
-Extensions
-Use MERT - Use Ishan's code
-Feature engineering - Aayushi
-Worker metadata scoring - More sentences?
-Sentence generation - Is it feasible?
-
 Ideas
+------
+Score each candidate sentence based on weights. Can implement both PRO and MERT for this.
 Deduce if more sentences needed
 Worker reccomendation
 
-ABC
+Default
+-------
+Choose the 1st translation as the best one for every sen. - [DONE]
+
+Baseline
+---------
+Use edit distance on sen as a feature to choose the sen with lowest edit dist i.e the one which has the most resemblance
+to others - [DONE]
+
+Extensions
+-----------
+- Use Edit dist with Lm probabilities (Bigram + Trigram] and Mean translation length penalty - [DONE]
+- Use PRO - Shreejit's code 
+- Use MERT - Use Ishan's code
+- Feature engineering - Aayushi
+- Worker metadata scoring - More sentences?
+- Sentence generation - Is it feasible?
