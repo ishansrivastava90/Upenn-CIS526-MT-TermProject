@@ -2,6 +2,8 @@
 
 __author__ = 'ishan'
 import nltk
+import sys
+
 from subprocess import call
 from subprocess import check_output
 
@@ -56,8 +58,8 @@ def get_srilm_ppl_for_sen(lm_file, sen):
 
     for ind,word in enumerate(command_output.split()):
         if word == 'ppl=':
-	        ppl = command_output.split()[ind+1]
-	        break
+            ppl = command_output.split()[ind+1]
+            break
 
     return float(ppl)
 
@@ -74,9 +76,10 @@ def get_srilm_logprob_for_sen(lm_file, sen):
 
     command_output= check_output([NGRAM, "-unk", "-lm", lm_file, "-ppl","temp_translation_file.txt"])
 
+    logprob = -1* sys.maxint
     for ind,word in enumerate(command_output.split()):
         if word == 'logprob=':
-	        ppl = command_output.split()[ind+1]
-	        break
+            logprob = command_output.split()[ind+1]
+            break
 
-    return float(ppl)
+    return float(logprob)

@@ -75,7 +75,7 @@ def gen_HQ_trans_with_lmprob(file_n, file_out, lm_file_lst):
     fw.write(header_str)
 
     # Reading all the lines from the file
-    for ln_no,ln in enumerate(f.readlines()):
+    for ln_no,ln in enumerate(f.readlines()[1:]):
         print "Processing ln: "+str(ln_no)
         ln_split = ln.strip().split("\t")
 
@@ -87,7 +87,7 @@ def gen_HQ_trans_with_lmprob(file_n, file_out, lm_file_lst):
             for lm_file in lm_file_lst:
                 if lm_file not in logprobs:
                     logprobs[lm_file] = list()
-                logprobs[lm_file].append(lm_gen.get_srilm_logprob_for_sen(lm_file, tran))
+                logprobs[lm_file].append(lm_gen.get_srilm_logprob_for_sen(lm_file, tran.lower()))
 
         for lm_file in lm_file_lst:
             for logprob in logprobs[lm_file]:

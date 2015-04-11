@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+
+import optparse
+
+optparser = optparse.OptionParser()
+optparser.add_option("-i", "--input", dest="input", default="data/turk_translations.tsv", help="MTurk translations file")
+opts = optparser.parse_args()[0]
+
+
+all_hyps = [line.split('\t')[1:] for line in open(opts.input)]
+for (ind,hyp) in enumerate(all_hyps[1:]) :
+    sents = hyp[0:4];
+    dis = [];
+    for (ind,sent) in enumerate(sents) :
+        ## The code goes here
+        best_ind = 1# Find the ind for the best translation
+
+    print sents[best_ind];
