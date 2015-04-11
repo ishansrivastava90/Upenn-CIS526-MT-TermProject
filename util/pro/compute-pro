@@ -1,0 +1,134 @@
+#!/usr/bin/env python
+import optparse
+from collections import namedtuple
+import sys
+
+import mod_bleu
+from utility import *
+
+def create_features(feats, hyp):
+    features = []
+    for feat in feats.split(' '):
+        (k, v) = feat.split('=')
+        features.append(float(v))
+
+    # count number of words in sentence
+    features.append(len(hyp))
+
+    # count number of untranslated words in sentence
+    unusual = find_untranslated(hyp)
+    features.append(len(unusual) / len(hyp))
+
+    # unigram feature vector
+    unigram_vec = vectorize_ngram(hyp, 1)
+    features.extend(unigram_vec)
+
+    # bigram feature vector
+    bigram_vec = vectorize_ngram(hyp, 2)
+    features.extend(bigram_vec)
+    #
+    # # trigram feature vector
+    trigram_vec = vectorize_ngram(hyp, 3)
+    features.extend(trigram_vec)
+
+    return features
+
+def calculate_pro_weights(all_hyps, ref, opts):
+    num_sents = len(all_hyps) / 100
+    # num_sents = (len(all_hyps) / 100) + 1
+    # print "num of sents is {}".format(num_sents)
+    nbests = [[] for _ in xrange(0, num_sents)]
+
+    for s in xrange(0, num_sents):
+        #collect all the n-best for i
+        hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+
+        nbests[s] = []
+        for (num, hypo, feats) in hyps_for_one_sent:
+            hyp = hypo.strip().lower().split()
+
+            features = create_features(feats, hyp)
+
+            # compute bleu score b
+            bleu_score = mod_bleu.compute_bleu(hyp, ref[int(s)])
+            # append (c, b) to nbests[i]
+            candidate = hypothesis(s, hypo, bleu_score, features)
+            # print "s is {} and bleu is {} and candidate is {}".format(s, blue_score, candidate)
+            # print "i = {} and hyp = {}".format(i, hyp)
+            nbests[s].append(candidate)
+    # print "Training went over {}".format(s)
+
+    # print "nbests of length {}".format(len(nbests))
+    j=0
+    theta = [0 for i in xrange(len(nbests[0][0].features))]
+    # print "theta {}".format(theta)
+
+    for i in xrange(0, opts.epochs):
+        seed(randint(0, 121))
+        for nbest in nbests:
+            j+=1
+            # if len(nbest) == 1:
+            # print "sampling with nbest {} for j {}".format(nbest, j/100)
+            sample = get_sample(nbest, opts)
+            # print "sample is {}".format(sample)
+            sorted_sample = sorted(sample, key=lambda candidate: candidate[0].smoothed_bleu, reverse=True)
+            top_sorted_sample = sorted_sample[0:opts.x_i]
+            mistakes = 0
+            for (s1, s2) in top_sorted_sample:
+                # print "s1 features {} and \n s2 features {} and \n theta {}".format(s1.features, s2.features, theta)
+                if vector_dot(theta, s1.features) <= vector_dot(theta, s2.features):
+                    mistakes += 1
+                    adj = [opts.eta * elem for elem in vector_diff(s1.features, s2.features)]
+                    theta = [theta[i] + adj[i] for i in xrange(0, len(adj))]
+    return theta
+
+def rerank(all_hyps, theta):
+    num_sents = len(all_hyps) / 100
+    for s in xrange(0, num_sents):
+        hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+        (best_score, best) = (-1e300, '')
+        for (num, hypo, feats) in hyps_for_one_sent:
+            hyp = hypo.strip().lower().split()
+
+            features = create_features(feats, hyp)
+
+            score = vector_dot(theta, features)
+
+            if score > best_score:
+                (best_score, best) = (score, hypo)
+        try:
+            sys.stdout.write("%s\n" % best)
+        except (Exception):
+            sys.exit(1)
+
+optparser = optparse.OptionParser()
+optparser.add_option("-k", "--kbest-list", dest="input", default="data/dev+test.100best", help="100-best translation lists")
+optparser.add_option("-b", "--kbest-trainlist", dest="train", default="data/train.100best", help="100-best training translation lists")
+optparser.add_option("-r", "--reference", dest="reference", default="data/dev.ref", help="Target language reference sentences")
+
+optparser.add_option("-n", "--numofsentences", dest="n", default=80000, type="int", help="Number of sentences to run on")
+optparser.add_option("-c", "--numoftrainingsentences", dest="t", default=40000, type="int", help="Number of sentences to run on")
+
+optparser.add_option("-l", "--lm", dest="lm", default=-1.0, type="float", help="Language model weight")
+optparser.add_option("-t", "--tm1", dest="tm1", default=-0.5, type="float", help="Translation model p(e|f) weight")
+optparser.add_option("-s", "--tm2", dest="tm2", default=-0.5, type="float", help="Lexical translation model p_lex(f|e) weight")
+
+optparser.add_option("-a", "--alpha", dest="alpha", default=0.01, type="float", help="sampler acceptance cutoff")
+optparser.add_option("-u", "--tau", dest="tau", default=5000, type="int", help="samples generated per input sentence")
+optparser.add_option("-x", "--x_i", dest="x_i", default=100, type="int", help="training data generated from the samples tau")
+optparser.add_option("-e", "--eta", dest="eta", default=0.5, type="float", help="perceptron learning rate")
+optparser.add_option("-p", "--epochs", dest="epochs", default=5, type="int", help="number of epochs for perceptron training")
+
+(opts, _) = optparser.parse_args()
+weights = {'p(e)'       : float(opts.lm) ,
+           'p(e|f)'     : float(opts.tm1),
+           'p_lex(f|e)' : float(opts.tm2)}
+
+hypothesis = namedtuple("hypothesis", "index, sentence, smoothed_bleu, features")
+ref = [line.strip().split() for line in open(opts.reference)][0:opts.n]
+all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
+train_hyps = [pair.split(' ||| ') for pair in open(opts.train)][0:opts.n]
+weights = calculate_pro_weights(train_hyps, ref, opts)
+# print weights
+rerank(all_hyps, weights)
+# print langid.classify("This is a test")
