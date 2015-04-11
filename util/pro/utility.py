@@ -8,12 +8,6 @@ import operator
 import nltk
 from nltk.stem.porter import *
 
-ngram_filemap = {
-    1: "unigram.pik",
-    2: "bigram.pik",
-    3: "trigram.pik"
-}
-
 def create_ngram(n, top=2000):
     file = ngram_filemap[n]
     if os.path.isfile(file):
@@ -80,15 +74,10 @@ def get_sample(nbest, opts):
 def vectorize(feature_space, feature_list):
     return [1 if feature in feature_list else 0 for feature in feature_space]
 
-unigrams = create_ngram(1)
-bigrams = create_ngram(2)
-trigrams = create_ngram(3)
+# unigrams = create_ngram(1)
+# bigrams = create_ngram(2)
+# trigrams = create_ngram(3)
 
-ngram_map = {
-    1:unigrams,
-    2:bigrams,
-    3:trigrams
-}
 
 def vectorize_ngram(hyp, n):
     feature_space = ngram_map[n].keys()
@@ -98,10 +87,6 @@ def vectorize_ngram(hyp, n):
 
 # print vector_diff([1,2,3], [4,5,6])
 # print vector_dot([1,2,3], [4,5,6])
-
-a = create_ngram(3, 1000)
-print a
-print len(a)
 # pickle.dump(a, open("unigram.pik", "wb"))
 #
 # a = ["a", "b", "b", "c"]

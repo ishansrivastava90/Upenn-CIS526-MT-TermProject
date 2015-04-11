@@ -8,37 +8,70 @@ from collections import defaultdict
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'model_gen'))
 import lm_gen
 
-"""
-Parsing all the translations and metadata from
-the file and returning a dict with translation
-key id
-"""
-def parse_from_file(file_n):
-    f = open(file_n)
+def parse_references_from_file(filename):
+    reference = namedtuple("reference", "id, ldc1, ldc2, ldc3, ldc4")
 
-    translations = namedtuple("translations",["src","ldc_trans", "turk_trans", "turk_md"])
-    trans_dict = defaultdict()
+    total_references = []
+    # all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
+    for line in open(filename):
+        ln_split = line.strip().split("\t")
 
-    # Reading all the lines from the file
-    for ln in f.readlines():
-        ln_split = ln.strip().split("\t")
+        total_references.append(reference(ln_split[0], ln_split[1], ln_split[2], ln_split[3], ln_split[4]))
+    return total_references
 
-        ldc_lst = list()
-        for tran in ln_split[2:6]:
-            ldc_lst.append(tran)
+# print len(parse_references_from_file("../../data/LDCtranslations.tsv"))
 
-        turk_lst = list()
-        for tran in ln_split[6:10]:
-            turk_lst.append(tran)
+def parse_translations_from_file(filename):
+    translation = namedtuple("translation", "id, src, turk_translation, bigram_prob, trigram_prob")
+    # translation = namedtuple("translation", "id, src, turk_translation, bigram_prob, trigram_prob, worker_id")
 
-        turk_md = list()
-        for tran in ln_split[10:]:
-            turk_md.append(tran)
+    total_translations = []
+    # all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
+    for line in open(filename):
+        ln_split = line.strip().split("\t")
 
-        trans_dict[ln_split[0]] = translations(ln_split[1], ldc_lst, turk_lst, turk_md)
-    f.close()
+        prob_zip = zip(ln_split[2:6], ln_split[6:10], ln_split[10:14])
+        # prob_zip = zip(ln_split[2:6], ln_split[6:10], ln_split[10:14], ln_split[14:18])
+        # print "prob_zip {}".format(prob_zip)
+        translations = [translation(ln_split[0], ln_split[1], pair[0], float(pair[1]), float(pair[2])) for pair in prob_zip]
+        # translations = [translation(ln_split[0], ln_split[1], pair[0], pair[1], pair[2], pair[3]) for pair in prob_zip]
+        total_translations.extend(translations)
+    return total_translations
 
-    return trans_dict
+# print parse_translations_from_file("../../data/turk_translations_w_logprob_eurparl_2_500.tsv")
+# print len(parse_translations_from_file("../../data/turk_translations_w_logprob_eurparl_2_500.tsv"))
+
+# """
+# Parsing all the translations and metadata from
+# the file and returning a dict with translation
+# key id
+# """
+# def parse_from_file(file_n):
+#     f = open(file_n)
+
+#     translations = namedtuple("translations",["src","turk_trans", "turk_md"])
+#     trans_dict = defaultdict()
+
+#     # Reading all the lines from the file
+#     for ln in f.readlines():
+#         ln_split = ln.strip().split("\t")
+
+#         ldc_lst = list()
+#         for tran in ln_split[2:6]:
+#             ldc_lst.append(tran)
+
+#         turk_lst = list()
+#         for tran in ln_split[6:10]:
+#             turk_lst.append(tran)
+
+#         turk_md = list()
+#         for tran in ln_split[10:]:
+#             turk_md.append(tran)
+
+#         trans_dict[ln_split[0]] = translations(ln_split[1], ldc_lst, turk_lst, turk_md)
+#     f.close()
+
+#     return trans_dict
 
 
 """
