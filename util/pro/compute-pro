@@ -2,15 +2,18 @@
 import optparse
 from collections import namedtuple
 import sys
+import os
+import math
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'parsing'))
+import parse
 
 import mod_bleu
 from utility import *
 
 def create_features(feats, hyp):
     features = []
-    for feat in feats.split(' '):
-        (k, v) = feat.split('=')
-        features.append(float(v))
+    features.extend(feats)
 
     # count number of words in sentence
     features.append(len(hyp))
@@ -19,44 +22,45 @@ def create_features(feats, hyp):
     unusual = find_untranslated(hyp)
     features.append(len(unusual) / len(hyp))
 
-    # unigram feature vector
-    unigram_vec = vectorize_ngram(hyp, 1)
-    features.extend(unigram_vec)
+    # # unigram feature vector
+    # unigram_vec = vectorize_ngram(hyp, 1)
+    # features.extend(unigram_vec)
 
-    # bigram feature vector
-    bigram_vec = vectorize_ngram(hyp, 2)
-    features.extend(bigram_vec)
-    #
-    # # trigram feature vector
-    trigram_vec = vectorize_ngram(hyp, 3)
-    features.extend(trigram_vec)
+    # # bigram feature vector
+    # bigram_vec = vectorize_ngram(hyp, 2)
+    # features.extend(bigram_vec)
+    # #
+    # # # trigram feature vector
+    # trigram_vec = vectorize_ngram(hyp, 3)
+    # features.extend(trigram_vec)
 
     return features
 
 def calculate_pro_weights(all_hyps, ref, opts):
-    num_sents = len(all_hyps) / 100
+    num_sents = len(all_hyps) / 4
+    # num_sents = 1
     # num_sents = (len(all_hyps) / 100) + 1
     # print "num of sents is {}".format(num_sents)
     nbests = [[] for _ in xrange(0, num_sents)]
 
     for s in xrange(0, num_sents):
         #collect all the n-best for i
-        hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+        hyps_for_one_sent = all_hyps[s * 4:s * 4 + 4]
 
         nbests[s] = []
-        for (num, hypo, feats) in hyps_for_one_sent:
-            hyp = hypo.strip().lower().split()
-
-            features = create_features(feats, hyp)
+        for single_hyp in hyps_for_one_sent:
+            hyp = single_hyp.turk_translation.strip().lower().split()
+            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp)
+            # features = [one_sentence_hyp.bigram_prob one_sentence_hyp.trigram_prob]
 
             # compute bleu score b
             bleu_score = mod_bleu.compute_bleu(hyp, ref[int(s)])
             # append (c, b) to nbests[i]
-            candidate = hypothesis(s, hypo, bleu_score, features)
-            # print "s is {} and bleu is {} and candidate is {}".format(s, blue_score, candidate)
+            candidate = hypothesis(s, single_hyp.turk_translation, bleu_score, features)
+            # print "s is {} and bleu is {} and candidate is {}".format(s, bleu_score, candidate)
             # print "i = {} and hyp = {}".format(i, hyp)
             nbests[s].append(candidate)
-    # print "Training went over {}".format(s)
+        # print "Training went over {}".format(s)
 
     # print "nbests of length {}".format(len(nbests))
     j=0
@@ -83,35 +87,33 @@ def calculate_pro_weights(all_hyps, ref, opts):
     return theta
 
 def rerank(all_hyps, theta):
-    num_sents = len(all_hyps) / 100
+    num_sents = len(all_hyps) / 4
     for s in xrange(0, num_sents):
-        hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100]
+        hyps_for_one_sent = all_hyps[s * 4:s * 4 + 4]
         (best_score, best) = (-1e300, '')
-        for (num, hypo, feats) in hyps_for_one_sent:
-            hyp = hypo.strip().lower().split()
+        for single_hyp in hyps_for_one_sent:
+            hyp = single_hyp.turk_translation.strip().lower().split()
 
-            features = create_features(feats, hyp)
+            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp)
 
             score = vector_dot(theta, features)
 
             if score > best_score:
-                (best_score, best) = (score, hypo)
+                (best_score, best) = (score, single_hyp.turk_translation)
         try:
             sys.stdout.write("%s\n" % best)
         except (Exception):
             sys.exit(1)
 
 optparser = optparse.OptionParser()
-optparser.add_option("-k", "--kbest-list", dest="input", default="data/dev+test.100best", help="100-best translation lists")
-optparser.add_option("-b", "--kbest-trainlist", dest="train", default="data/train.100best", help="100-best training translation lists")
-optparser.add_option("-r", "--reference", dest="reference", default="data/dev.ref", help="Target language reference sentences")
+optparser.add_option("-i", "--input", dest="input", default="../../data/turk_translations_w_logprob_eurparl_2_500.tsv", help="Turk translations")
+optparser.add_option("-r", "--ref", dest="reference", default="../../data/LDCtranslations.tsv", help="LDC Translations")
 
 optparser.add_option("-n", "--numofsentences", dest="n", default=80000, type="int", help="Number of sentences to run on")
 optparser.add_option("-c", "--numoftrainingsentences", dest="t", default=40000, type="int", help="Number of sentences to run on")
 
-optparser.add_option("-l", "--lm", dest="lm", default=-1.0, type="float", help="Language model weight")
-optparser.add_option("-t", "--tm1", dest="tm1", default=-0.5, type="float", help="Translation model p(e|f) weight")
-optparser.add_option("-s", "--tm2", dest="tm2", default=-0.5, type="float", help="Lexical translation model p_lex(f|e) weight")
+optparser.add_option("-b", "--bigram", dest="bigram", default=-1.0, type="float", help="Language model weight for bigram")
+optparser.add_option("-t", "--trigram", dest="trigram", default=-0.5, type="float", help="Translation model weight for trigram")
 
 optparser.add_option("-a", "--alpha", dest="alpha", default=0.01, type="float", help="sampler acceptance cutoff")
 optparser.add_option("-u", "--tau", dest="tau", default=5000, type="int", help="samples generated per input sentence")
@@ -120,15 +122,18 @@ optparser.add_option("-e", "--eta", dest="eta", default=0.5, type="float", help=
 optparser.add_option("-p", "--epochs", dest="epochs", default=5, type="int", help="number of epochs for perceptron training")
 
 (opts, _) = optparser.parse_args()
-weights = {'p(e)'       : float(opts.lm) ,
-           'p(e|f)'     : float(opts.tm1),
-           'p_lex(f|e)' : float(opts.tm2)}
+weights = {'bigram'       : float(opts.bigram) ,
+           'trigram'     : float(opts.trigram)}
 
 hypothesis = namedtuple("hypothesis", "index, sentence, smoothed_bleu, features")
-ref = [line.strip().split() for line in open(opts.reference)][0:opts.n]
-all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
-train_hyps = [pair.split(' ||| ') for pair in open(opts.train)][0:opts.n]
-weights = calculate_pro_weights(train_hyps, ref, opts)
-# print weights
+
+ref = parse.parse_references_from_file(opts.reference)[0:opts.n]
+
+# all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
+all_hyps = parse.parse_translations_from_file(opts.input)[0:opts.n]
+
+# print "all_hyps {} ref {}".format(all_hyps, ref)
+weights = calculate_pro_weights(all_hyps, ref, opts)
+print weights
 rerank(all_hyps, weights)
 # print langid.classify("This is a test")
