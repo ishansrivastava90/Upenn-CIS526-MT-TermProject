@@ -10,29 +10,27 @@ import parse
 
 import mod_bleu
 from utility import *
+from numpy import mean
 
-def create_features(feats, hyp):
+def length_penalty():
+
+    bprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[4:8]) ];
+    tprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[8:12]) ];
+
+def create_features(feats, hyp, sents):
     features = []
-    features.extend(feats)
+    avg_len = mean([len(s) for s in sents])
+    penalty = math.exp(abs(len(hyp)-avg_len)*1.0)
 
-    # count number of words in sentence
-    features.append(len(hyp))
+    features.extend([penalty * feat for feat in feats])
+    
+    # print "feats {} avg len {} for {} penalty {}".format(feats, avg_len, sents, penalty)
 
-    # count number of untranslated words in sentence
-    unusual = find_untranslated(hyp)
-    features.append(len(unusual) / len(hyp))
+    features.append(penalty)
 
-    # # unigram feature vector
-    # unigram_vec = vectorize_ngram(hyp, 1)
-    # features.extend(unigram_vec)
-
-    # # bigram feature vector
-    # bigram_vec = vectorize_ngram(hyp, 2)
-    # features.extend(bigram_vec)
-    # #
-    # # # trigram feature vector
-    # trigram_vec = vectorize_ngram(hyp, 3)
-    # features.extend(trigram_vec)
+    if len(hyp) <= 2 or "NO TRANSLATION FOUND" in " ".join(hyp):
+        # print "hyp {}".format(" ".join(hyp))
+        features = [-1000, -1000, penalty]
 
     return features
 
@@ -50,7 +48,8 @@ def calculate_pro_weights(all_hyps, ref, opts):
         nbests[s] = []
         for single_hyp in hyps_for_one_sent:
             hyp = single_hyp.turk_translation.strip().lower().split()
-            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp)
+            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp, 
+                [h.turk_translation.strip().lower().split() for h in hyps_for_one_sent])
             # features = [one_sentence_hyp.bigram_prob one_sentence_hyp.trigram_prob]
 
             # compute bleu score b
@@ -94,7 +93,8 @@ def rerank(all_hyps, theta):
         for single_hyp in hyps_for_one_sent:
             hyp = single_hyp.turk_translation.strip().lower().split()
 
-            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp)
+            features = create_features([single_hyp.bigram_prob, single_hyp.trigram_prob], hyp,
+                [h.turk_translation.strip().lower().split() for h in hyps_for_one_sent])
 
             score = vector_dot(theta, features)
 
@@ -106,8 +106,8 @@ def rerank(all_hyps, theta):
             sys.exit(1)
 
 optparser = optparse.OptionParser()
-optparser.add_option("-i", "--input", dest="input", default="../../data/turk_translations_w_logprob_eurparl_2_500.tsv", help="Turk translations")
-optparser.add_option("-r", "--ref", dest="reference", default="../../data/LDCtranslations.tsv", help="LDC Translations")
+optparser.add_option("-i", "--input", dest="input", default="../../data/training/turk_translations_w_logprob_eurparl_2.tsv", help="Turk translations")
+optparser.add_option("-r", "--ref", dest="reference", default="../../data/training/LDCtranslations.tsv", help="LDC Translations")
 
 optparser.add_option("-n", "--numofsentences", dest="n", default=80000, type="int", help="Number of sentences to run on")
 optparser.add_option("-c", "--numoftrainingsentences", dest="t", default=40000, type="int", help="Number of sentences to run on")
@@ -122,8 +122,6 @@ optparser.add_option("-e", "--eta", dest="eta", default=0.5, type="float", help=
 optparser.add_option("-p", "--epochs", dest="epochs", default=5, type="int", help="number of epochs for perceptron training")
 
 (opts, _) = optparser.parse_args()
-weights = {'bigram'       : float(opts.bigram) ,
-           'trigram'     : float(opts.trigram)}
 
 hypothesis = namedtuple("hypothesis", "index, sentence, smoothed_bleu, features")
 
@@ -133,7 +131,7 @@ ref = parse.parse_references_from_file(opts.reference)[0:opts.n]
 all_hyps = parse.parse_translations_from_file(opts.input)[0:opts.n]
 
 # print "all_hyps {} ref {}".format(all_hyps, ref)
-weights = calculate_pro_weights(all_hyps, ref, opts)
+weights = calculate_pro_weights(all_hyps[:1370], ref, opts)
 print weights
 rerank(all_hyps, weights)
 # print langid.classify("This is a test")
