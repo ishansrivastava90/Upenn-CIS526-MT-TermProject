@@ -19,49 +19,49 @@ optparser.add_option("-i", "--input", dest="input", default="../../data/turk_tra
 opts = optparser.parse_args()[0]
 
 
-wbp = 0.1 ;
-wtp = 0.9;
+wbp = 0.1
+wtp = 0.9
 
 all_hyps = [line.split('\t')[2:] for line in open(opts.input)]
 
 for (ind,hyp) in enumerate(all_hyps[1:]) :
-    sents = hyp[0:4];
-    avg_len = mean([len(s) for s in sents ]);
+    sents = hyp[0:4]
+    avg_len = mean([len(s) for s in sents ])
     penalty = [ exp(abs(len(s)-avg_len)*1.0 / avg_len) for s in sents ]
-    bprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[4:8]) ];
-    tprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[8:12]) ];
+    bprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[4:8]) ]
+    tprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[8:12]) ]
 
     #bprob = [ float(h) for h in hyp[4:8] ];
     #tprob = [ float(h) for h in hyp[8:12] ];
 
     dis =[]
-    for (ind,sent) in enumerate(sents) :
+    for s_ind,sent in enumerate(sents) :
          if len(word_tokenize(sent)) <= 2 or "NO TRANSLATION FOUND" in sent:
-             bprob[ind] = -10000;
-             tprob[ind] = -10000;
+             bprob[s_ind] = -10000
+             tprob[s_ind] = -10000
 
-         dis.append(mean([ edit_dist_levenshtein.levenshteinDistance(s,sent) for s in sents ]));
+         dis.append(mean([ edit_dist_levenshtein.levenshteinDistance(s,sent) for s in sents ]))
 
     # Getting the best 2 ind i.e with lowest edit dist
     dis_sort = dis[:]
     dis_sort.sort()
     max_inds = list()
-    for d_ind,dist in enumerate(dis_sort[:2]):
-	dis_ind = dis.index(dist)
-	if dis_ind in max_inds:
+    for dist in dis_sort[:2]:
+        dis_ind = dis.index(dist)
+        if dis_ind in max_inds:
             dis[dis_ind] = sys.maxint
-	    dis_ind = dis.index(dist)
-
-	max_inds.append(dis.index(dist))
+        dis_ind = dis.index(dist)
+        max_inds.append(dis.index(dist))
 
     #print dis
     #print max_inds
     
     best_lm_score = -1*sys.maxint
+    max_ind = -1
     for m_ind in max_inds:
         if bprob[m_ind]*wbp + tprob[m_ind]*wtp > best_lm_score:
             best_lm_score = bprob[m_ind]*wbp + tprob[m_ind]*wtp
             max_ind = m_ind
     #print max_ind
 
-    print sents[max_ind];
+    print sents[max_ind]
