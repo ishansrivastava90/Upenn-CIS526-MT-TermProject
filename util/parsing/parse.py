@@ -19,7 +19,7 @@ def parse_references_from_file(filename):
         total_references.append(reference(ln_split[0], ln_split[1], ln_split[2], ln_split[3], ln_split[4]))
     return total_references
 
-# print len(parse_references_from_file("../../data/LDCtranslations.tsv"))
+# print len(parse_references_from_file("../../data/training/LDCtranslations.tsv"))
 
 def parse_translations_from_file(filename):
     translation = namedtuple("translation", "id, src, turk_translation, bigram_prob, trigram_prob")
@@ -27,19 +27,26 @@ def parse_translations_from_file(filename):
 
     total_translations = []
     # all_hyps = [pair.split(' ||| ') for pair in open(opts.input)][0:opts.n]
+
+    # For skipping header
+    count = 0
     for line in open(filename):
+        if count == 0:
+            count = 1
+            continue
         ln_split = line.strip().split("\t")
 
         prob_zip = zip(ln_split[2:6], ln_split[6:10], ln_split[10:14])
         # prob_zip = zip(ln_split[2:6], ln_split[6:10], ln_split[10:14], ln_split[14:18])
         # print "prob_zip {}".format(prob_zip)
         translations = [translation(ln_split[0], ln_split[1], pair[0], float(pair[1]), float(pair[2])) for pair in prob_zip]
-        # translations = [translation(ln_split[0], ln_split[1], pair[0], pair[1], pair[2], pair[3]) for pair in prob_zip]
+        # translations = [translation(ln_split[0], ln_split[1], pair[0], float(pair[1]), float(pair[2]), pair[3]) for pair in prob_zip]
         total_translations.extend(translations)
+        # break
     return total_translations
 
-# print parse_translations_from_file("../../data/turk_translations_w_logprob_eurparl_2_500.tsv")
-# print len(parse_translations_from_file("../../data/turk_translations_w_logprob_eurparl_2_500.tsv"))
+# print parse_translations_from_file("../../data/turk_translations_w_logprob_eurparl_2.tsv")
+# print len(parse_translations_from_file("../../data/training/turk_translations_w_logprob_eurparl_2.tsv"))
 
 # """
 # Parsing all the translations and metadata from
