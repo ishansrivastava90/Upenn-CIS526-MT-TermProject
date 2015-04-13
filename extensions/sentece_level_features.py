@@ -35,14 +35,12 @@ def ngram_matches(hyp,n):
 	
 	total_bi = len(dbsGram)
 	matched = []
-	for l1 in dbsGram:
-		for ngram in hyp_ngrams:
-			if ngram in matched:
-				continue
-			else:
-				if ngram == l1:
-					matched.append(ngram)
+	#for l1 in dbsGram:
+	#	for ngram in hyp_ngrams:
+	#		if ngram not in matched and ngram == l1:
+	#			matched.append(ngram)
 
+	matched=[ngram for ngram in hyp_ngrams if ngram not in matched and ngram in dbsGram]
 	#matched=[]
 	#matched= [ngram for l1 in bigrams for ngram in hyp_ngrams if ngram not in matched and ngram == l1]
 	matched_len = len((matched))
@@ -58,19 +56,21 @@ optparser.add_option("-n", "--ngram", dest="ngram", default="data/trigram_europa
 
 all_ngrams = [line.strip().split('\t') for line in open(opts.ngram)]
 
-unigrams= all_ngrams[301648]
+unigrams= all_ngrams[7:301648]
 bigrams= all_ngrams[301650:5063124]
 trigrams = all_ngrams[5063127:9047914]
 
 all_hyps = [line.split('\t')[1:] for line in open(opts.input)]
-for (ind,hyp) in enumerate(all_hyps) :
+for (ind,hyp) in enumerate(all_hyps[:1370]) :
     sents = hyp[0:5];
     ref = sents[0];
     lp={};
+    bigram_match_percent = []
     for (ind,sent) in enumerate(sents[1:5]) :
+    	#bigram_match_percent.append(ngram_matches(sent,2))
     	lp[ind+1] = length_penalty(sent, ref);
-    	
-        
+
+    #max_per = argmax(bigram_match_percent)
     min_val = sorted(lp.items(), key = operator.itemgetter(1), reverse= True)[0]
     #print min_val
-    print sents[min_val[0]];
+    print sents[min_val[0]]
