@@ -29,7 +29,7 @@ for (ind,hyp) in enumerate(all_hyps[1:]) :
     #bprob = [ float(h) for h in hyp[4:8] ];
     #tprob = [ float(h) for h in hyp[8:12] ];
     for (ind,sent) in enumerate(sents) :
-         if len(word_tokenize(sent)) <= 2 or "NO TRANSLATION FOUND" in sent:
+         if len(word_tokenize(sent)) < 2 or "NO TRANSLATION FOUND" in sent or "n/a" in sent:
              bprob[ind] = -10000;
              tprob[ind] = -10000;
 
