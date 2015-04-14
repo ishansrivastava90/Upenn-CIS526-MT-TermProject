@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from numpy import argmin,mean
-from nltk import word_tokenize;
+from nltk import word_tokenize
 
 '''
 The following code of Levenshtein distance is taken from
@@ -9,8 +8,8 @@ http://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distan
 Minor modifcations are made to the code
 '''
 def levenshteinDistance(s1,s2):
-    s1 = word_tokenize(s1) ;
-    s2 = word_tokenize(s2) ;
+    s1 = word_tokenize(s1)
+    s2 = word_tokenize(s2)
     if len(s1) > len(s2):
         s1,s2 = s2,s1
     distances = range(len(s1) + 1)
