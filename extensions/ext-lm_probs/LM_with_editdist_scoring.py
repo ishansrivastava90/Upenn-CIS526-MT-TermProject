@@ -4,8 +4,8 @@
 ## BLEU score : 0.2849
 
 import optparse
-from numpy import argmax,argmin,mean
-from nltk import word_tokenize;
+from numpy import mean
+from nltk import word_tokenize
 from math import exp
 import sys, os
 
@@ -26,8 +26,8 @@ all_hyps = [line.split('\t')[2:] for line in open(opts.input)]
 
 for (ind,hyp) in enumerate(all_hyps[1:]) :
     sents = hyp[0:4]
-    avg_len = mean([len(s) for s in sents ])
-    penalty = [ exp(abs(len(s)-avg_len)*1.0 / avg_len) for s in sents ]
+    avg_ln = mean([len(s) for s in sents ])
+    penalty = [ exp(abs(len(s)-avg_ln)*1.0 / avg_ln) for s in sents ]
     bprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[4:8]) ]
     tprob = [ float(h)*penalty[ind] for (ind,h) in enumerate(hyp[8:12]) ]
 
