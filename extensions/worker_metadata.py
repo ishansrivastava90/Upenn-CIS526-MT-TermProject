@@ -1,47 +1,7 @@
 import optparse
 from collections import Counter
 
-workerInfo = {};
 
-def worker_data(workerID, workerMetadata):
-	workerInfo[workerID] = (workerMetadata)
-	pass
-
-def native_speaker(workerID,n):
-	if workerID in workerInfo :
-		# is a native speaker
-		if workerInfo[workerID][n] == 'YES':
-			languageFlag= 1; 
-		else:
-			languageFlag = 0;
-
-		#experience 
-		if workerInfo[workerID][n+4] != 'UNKNOWN':
-			numYears = workerInfo[workerID][n+4];
-		else:
-			numYears = 0;
-
-	else:
-		languageFlag = 0;
-		numYears = 0;
-	
-	return (languageFlag, numYears);
-
-def worker_location(workerID):
-	if workerID in workerInfo:
-		#is in PAKISTAN?
-		if workerInfo[workerID][3] != 'UNKNOWN':
-			inPak = 1;
-		else:
-			inPak = 0;
-
-		#is in INDIA?
-		if workerInfo[workerID][2] != 'UNKNOWN':
-			inIndia = 1;
-		else:
-			inIndia = 0;
-	return (inPak, inIndia);
-	
 optparser = optparse.OptionParser()
 optparser.add_option("-i", "--input", dest="input", default="data/translations.tsv", help="Turk translations")
 optparser.add_option("-r", "--ref", dest="reference", default="data/survey.tsv", help="Worker metadeta file")
@@ -55,14 +15,31 @@ optparser.add_option("-r", "--ref", dest="reference", default="data/survey.tsv",
 
 all_hyps = [line.strip().split('\t')[1:] for line in open(opts.input)][:10]
 all_workers = [line.strip().split('\t') for line in  open(opts.reference)][1:]
+#all_workers = [line.replace('YES', 1) for line in  open(opts.reference)][1:]
+#print all_workers[1]
+
 
 
 #print all_workers[0]
 #print "Hyp:{0}, ID:{1}".format(all_hyps[1][5], all_hyps[1][9])
+workerInfo = {};
 
-for worker in all_workers:
-	worker_data(worker[0], worker[1:])
+for worker in all_workers[0:5]:
+	workerData =[0]*6
+	workerID = worker[0];
+	for (i,metadata) in enumerate(worker[1:4]):
+		print i
+		if metadata == 'YES':
+			workerData[i] = 1;
+		else:
+			workerData[i] = 0;
+	for (i, metadata) in enumerate(worker[5:]):
+		if metadata =='UNKNOWN':
+			workerData[i+4] = 0;
+		else:
+			workerData[i+4] = metadata;
 
+	workerInfo[workerID] = workerData;
 
 for hyp in all_hyps[1:]:
 	isNativeUrdu=[];
@@ -73,22 +50,19 @@ for hyp in all_hyps[1:]:
 	inPak =[];
 
 	for index in xrange(9,13):
-		#Urdu 
-		(isNativeSpeaker, numYears) = native_speaker(hyp[index],1)
-		isNativeUrdu.append(isNativeSpeaker);
-		numYearsUrdu.append(numYears);
+		 
+		if hyp[index] in workerInfo:
+
+			isNativeUrdu.append(workerInfo[hyp[index]][1]);
+			numYearsUrdu.append(workerInfo[hyp[index]][5]);
+			inPak.append(workerInfo[hyp[index]][3]);
+
+			isNativeEnglish.append(workerInfo[hyp[index]][0]);
+			numYearsEnglish.append(workerInfo[hyp[index]][4]);	
+			inIndia.append(workerInfo[hyp[index]][2]);
 
 
-		#English
-		(isNativeSpeaker,numYears) = native_speaker(hyp[index],0);
-		isNativeEnglish.append(isNativeSpeaker);
-		numYearsEnglish.append(numYears);
 
-		#Location of Turker
-		(pak, india) = worker_location(hyp[index]);
-		inIndia.append(india);
-		inPak.append(pak);
-	
 	
 
 
