@@ -3,8 +3,6 @@ import sys,os
 import optparse
 from collections import namedtuple
 
-#from gen_feature import compute_avg_len
-#from gen_src_tokens import load_src_tokens
 from gen_translations import gen_best_translations_by_lambda
 from line_util import find_intersecting_line
 from line_util import compute_line
@@ -45,11 +43,13 @@ def powell_search_mod(opts, all_trans_feat):
     num_sents = len(src_sen)
 
     # Initial values for lambdas
-    lambdas = {feat_names.BIGRAM  : float(opts.w_lm_bigram),
-               feat_names.TRIGRAM : float(opts.w_lm_trigram)}
+    lambdas = {feat_names.BIGRAM        : float(opts.w_lm_bigram),
+               feat_names.TRIGRAM       : float(opts.w_lm_trigram),
+               feat_names.EDIT_DIST     : float(opts.w_edit_dist),
+               feat_names.PENALTY_SHORT : float(opts.w_pen_short),
+               feat_names.PENALTY_LONG  : float(opts.w_pen_long),}
 
 
-               #'w_edit_dist'  : float(opts.w_edit_dist),
                #'len_d'      : float(opts.ld),
                #'p(e)'       : float(opts.lm),
                #'p(e|f)'     : float(opts.tm1),
@@ -60,13 +60,16 @@ def powell_search_mod(opts, all_trans_feat):
 
     inc_lambdas = {feat_names.BIGRAM  : True,
                    feat_names.TRIGRAM : True,
-                   'w_edit_dist'  : False,
-                   'len_d'      : False,
-                   'p(e)'       : False,
-                   'p(e|f)'     : False,
-                   'p_lex(f|e)' : False,
-                   'trans_w'    : False,
-                   'avg_len_d'  : False}
+                   feat_names.EDIT_DIST : True,
+                   feat_names.PENALTY_SHORT : True,
+                   feat_names.PENALTY_LONG : True}
+
+                # 'len_d'      : False,
+                # 'p(e)'       : False,
+                # 'p(e|f)'     : False,
+                # 'p_lex(f|e)' : False,
+                # 'trans_w'    : False,
+                # 'avg_len_d'  : False}
 
 
     # lambdas_order = ['p(e)', 'p(e|f)', 'p_lex(f|e)', 'len_d']
@@ -200,10 +203,14 @@ if __name__=="__main__":
     optparser = optparse.OptionParser()
 
     optparser.add_option("-d", "--trans_data", dest="trans_data", default="../../data/translations.tsv", help="The complete translations data file")
-    optparser.add_option("-l", "--trans_lm_file", dest="trans_lm_file", default="../../data/turk_translations_w_logprob_eurparl_2.tsv", help="Language model prob")
+    optparser.add_option("-l", "--trans_lm_file", dest="trans_lm_file", default="../../data/turk_translations_w_logprob_europarl_c.tsv", help="Language model prob")
+    optparser.add_option("-f", "--trans_feat", dest="trans_feat", default="../../data/turk_translations_features_5.tsv", help="Translation features")
 
-    optparser.add_option("-b", "--lm", dest="w_lm_bigram", default=0.2, type="float", help="Bigram Language model weight")
-    optparser.add_option("-t", "--tm1", dest="w_lm_trigram", default=0.8, type="float", help="Trigram Language model weight")
+    optparser.add_option("-b", "--lm", dest="w_lm_bigram", default=0.01, type="float", help="Bigram Language model weight")
+    optparser.add_option("-t", "--tm1", dest="w_lm_trigram", default=0.09, type="float", help="Trigram Language model weight")
+    optparser.add_option("-e", "--ed", dest="w_edit_dist", default=0.7, type="float", help="Edit distance feat weight")
+    optparser.add_option("-p", "--lps", dest="w_pen_short", default=0.1, type="float", help="Short sen len penalty weight")
+    optparser.add_option("-s", "--lpl", dest="w_pen_long", default=0.1, type="float", help="Long sen len penalty weight")
 
     (opts, _) = optparser.parse_args()
 
