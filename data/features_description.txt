@@ -1,0 +1,8 @@
+Bigram_Lprob :  Bigram LM probability 
+Trigram_Lprob : Trigram LM probability 
+Penalty_Short : Penalty for the sentence being short
+Penalty_Long : Penalty for the sentence being long
+Edit_Distance1 : 
+Average_TER : average TER metric of a translation with its fellow translations
+Bigram_mismatch_percentage : Percentage of bigrams not in europarl bigrams.
+Trigram_mismatch_percentage : Percentage of trigrams not in europarl trigrams.
