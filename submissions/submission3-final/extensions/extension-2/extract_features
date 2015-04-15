@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+
+## Generates Sentence level and Worker level features
+import optparse
+from numpy import argmin
+from SegIDInfo import SegIDInfo
+from nltk import word_tokenize 
+
+optparser = optparse.OptionParser()
+optparser.add_option("-l", "--inputlm", dest="inputlm", default="data/turk_translations_w_logprob_eurparl_2.tsv", help="MTurk translations file with language model probabilities")
+optparser.add_option("-r", "--ref", dest="reference", default="data/survey.tsv", help="Worker metadeta file")
+optparser.add_option("-i", "--input", dest="input", default="data/turk_translations.tsv", help="MTurk translations")
+optparser.add_option("-n", "--ngram", dest="ngram", default="data/trigram_europarl.srilm", help="Europarl file")
+optparser.add_option("-t", "--ter", dest="ter", default="data/easyTER.tsv", help="TER file")
+opts = optparser.parse_args()[0]
+
+#####################################SENTENCE LEVEL FEATURES###########################################################
+## Read bigrams and trigrams
+all_ngrams = [line.strip().split('\t') for line in open(opts.ngram)]
+bigrams = all_ngrams[301650:5063124]
+trigrams = all_ngrams[5063127:9047914]
+del all_ngrams
+bigrams = set([ b[1] for b in bigrams])
+trigrams = set([ t[1] for t in trigrams])
+
+## TER metric
+TER = [];
+turks_ter = [line.strip().split('\t') for line in open(opts.ter)]
+for ter_line in turks_ter :
+    TER.append([ t for t in ter_line ]);
+
+## Bigram and trigram probabilities
+bi_lmprobs = [];
+tri_lmprobs = [];
+lines = [ line for line in open(opts.inputlm)][1:];
+for line in lines :
+    tprobs = [ h.strip() for h in line.strip().split('\t')[10:14] ] 
+    bprobs = [ h.strip() for h in line.strip().split('\t')[6:10] ] 
+    tri_lmprobs.append(tprobs);
+    bi_lmprobs.append(bprobs);
+
+
+header_str = "SegID\tUrdu\tTurk_Translation_1\tTurk_Translation_2\tTurk_Translation_3\tTurk_Translation_4\t"
+feat_str = "";
+for i in [1,2,3,4] :
+    sids = tuple([str(i)]*22);
+    feat_str_i = "Bigram_Lprob%s\tTrigram_Lprob%s\tPenalty_Short%s\tPenalty_Long%s\tEdit_Distance%s\tAverage_TER%s\tBigram_mismatch_percentage%s\tTrigram_mismatch_percentage%s\tWorker_Bigram_Lprob%s\tWorker_Trigram_Lprob%s\tWorker_Penalty_Short%s\tWorker_Penalty_Long%s\tWorker_Edit_Distance%s\tWorker_Average_TER%s\tWorker_Bigram_mismatch_percentage%s\tWorker_Trigram_mismatch_percentage%s\tIsEnglishNative%s\tIsUrduNative%s\tLocationIndia%s\tLocationPakistan%s\tYearSpeakingEnglish%s\tYearSpeakingUrdu%s\t" % (sids)
+    feat_str += feat_str_i;
+header_str += feat_str
+print header_str
+
+
+all_segs = [ line for line in open(opts.input) ][1:]
+sg_list = [];
+for (ind,line) in enumerate(all_segs) :
+    ## Create sentence level feature vector
+    sinfo = SegIDInfo(line);
+    sinfo.setLMprobs( bi_lmprobs[ind], tri_lmprobs[ind] );
+    A = TER[ind];
+    sinfo.setTER(A);
+    sinfo.setFinalVector(bigrams, trigrams);
+    sg_list.append(sinfo);
+
+
+## Read worker's data from survey.tsv
+def read_WorkerInfo(reffile) :
+    all_workers = [line.strip().split('\t') for line in  open(reffile)][1:]
+    workerInfo = {};
+    for worker in all_workers:
+	workerData =[0]*6
+	workerID = worker[0];
+	for (i,metadata) in enumerate(worker[1:5]):
+		if metadata == 'YES':
+			workerData[i] = 1.0;
+		else:
+			workerData[i] = 0.0;
+	for (i, metadata) in enumerate(worker[5:]):
+		if metadata =='UNKNOWN':
+			workerData[i+4] = 0.0;
+		else:
+			workerData[i+4] = float(metadata);
+	workerInfo[workerID] = workerData;
+    return workerInfo
+
+worker_data = read_WorkerInfo(opts.reference)
+
+#####################################WORKER LEVEL FEATURES###########################################################
+##  Extract Aggregate Worker features
+VECLEN = SegIDInfo.FVlength_sent;
+wlist = {};
+for sg in sg_list :
+    workers = sg.getWorkerIds();
+    fv = sg.getFinalVector();
+    id = sg.getSegID();
+    fvs = [];
+    for ind in range(0,VECLEN*4,VECLEN) :
+        fvs.append( fv[ind:ind+VECLEN] );
+    for (w,v) in zip(workers,fvs) :
+	if w not in wlist :
+		wlist[w] = {};
+	wlist[w][id] = v;
+	
+w_features = {};
+for (k,v) in wlist.iteritems() :
+    sum_vec = [0.0]*VECLEN; 
+    for vec in v.values() :
+	sum_vec = [ (a+b) for (a,b) in zip(sum_vec,vec) ] 
+    avg_vec = [ s*1.0/len(v) for s in sum_vec ];
+    w_features[k] = avg_vec;
+
+
+## Print final features
+for sg in sg_list :
+    print sg.getFinalVectorString(w_features, worker_data);    
+ 
+
+
