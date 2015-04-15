@@ -21,3 +21,7 @@ Extensions
 - Feature engineering - Aayushi
 - Worker metadata scoring - More sentences?
 - Sentence generation - Is it feasible?
+
+Doutbs/Issues
+-------------
+- Edit distance - Do we need to normalize them over sentences?
