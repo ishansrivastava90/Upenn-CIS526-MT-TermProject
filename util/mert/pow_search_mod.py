@@ -155,7 +155,7 @@ def powell_search_mod(opts, all_trans_feat):
             # Generating the best translations
             initial_fuzz = 1
             lambdas_t[param] = thresh_points[0] - initial_fuzz
-            best_translations = gen_best_translations_by_lambda(all_trans, all_trans_feat, src_sen, lambdas, inc_lambdas)
+            best_translations = gen_best_translations_by_lambda(all_trans, all_trans_feat, src_sen, lambdas_t, inc_lambdas)
 
             print "Computing best translations......"
 
@@ -165,14 +165,14 @@ def powell_search_mod(opts, all_trans_feat):
             best_translations_split = [line.strip().split() for line in best_translations]
             max_bleu_score = compute_bleu.compute_bleu( best_translations_split, ref)
 
-            print max_bleu_score
+            #print max_bleu_score
 
             print "Finding the optimal lambda value......"
             # Finding the optimal lambda_v using the best bleu score
             for t_ind in xrange(1,len(thresh_points)):
                 #print t_ind
                 lambdas_t[param] = float(thresh_points[t_ind-1] + thresh_points[t_ind])/2
-                best_translations = gen_best_translations_by_lambda(all_trans, all_trans_feat, src_sen, lambdas, inc_lambdas)
+                best_translations = gen_best_translations_by_lambda(all_trans, all_trans_feat, src_sen, lambdas_t, inc_lambdas)
 
                 length_check(ref, best_translations)
                 best_translations_split = [line.strip().split() for line in best_translations]
@@ -182,6 +182,7 @@ def powell_search_mod(opts, all_trans_feat):
                     argmax_lambda_v = lambdas_t[param]
 
                 #print "%s t_ind max_bleu_Score %s" %(t_ind, max_bleu_score)
+            print "Maximum bleu score for this param in this iteration"+str(max_bleu_score)
 
             print "Checking if the best lambda_v for this feat_wt improves the overall bleu score"
             # Take the param value if the best bleu score is greater
