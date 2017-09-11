@@ -23,7 +23,7 @@ However, naively considering these translations would lead to lower quality, inc
 The task is to use these crowdsourced translations and the metadata associated with it to obtain near professional level translation quality. Such crowdsourced translations can serve as bilingual training data as well as high quality translations.
 
 
-##Data
+## Data
 The data has been split up into 3 files:
 
 1.  **LDCTranslations.tsv** - This file has the sentence id to high quality translation mapping. We currently have 4 LDC Translations per Urdu sentence
@@ -31,11 +31,11 @@ The data has been split up into 3 files:
 3.  **survey.tsv** - This file has the worker_id to metadata mapping where data regarding the country of domicile, English proficiency and Urdu proficiency have been provided
 4.  **lm_probabilities.tsv** - This file has the sentence id along with bigram and trigram log probabilities for every translation
 
-###Test and train set
+### Test and train set
 We plan to use 400 of the LDC Translations as the test set which will not be provided. This will be used for scoring on the leaderboard.
 The rest of the translations may be used as references for training.
 
-##Scoring function
+## Scoring function
 The scoring objective function is the BLEU similarity of a chosen translated sentence to the 4 reference (LDC) translations. We have used a modified BLEU scoring function that calculates the ngram similarity with all of the 4 reference sentences instead of just 1. The BLEU score is then accumulated over the entire translation set.
 
 The turker translations and metadata are to be used to generate features which then can be optimized using methods like PRO and MERT by using the reference translations given in the LDC Translations.
@@ -53,11 +53,11 @@ We can compute the bleu score of the output using the command
 
 Currently this system gives a BLEU score of 0.239.
 
-##Baseline
+## Baseline
 
 To beat the baseline implement your own optimization method with a combination of more features like language model probabilities and TER.
 
-##The Challenge
+## The Challenge
 
 Your task for this assignment is to improve the accuracy of crowdsourced translations as much as possible. Implementing MERT with simple features like bigram and trigram scores should be enough to cross the baseline. 
 
