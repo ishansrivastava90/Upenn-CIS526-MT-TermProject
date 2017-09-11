@@ -2,7 +2,7 @@ Crowd-sourcing Translation
 =========================
 
 
-##Introduction
+## Introduction
 Statistical Machine Translation relies heavily on the availability of bilingual training data and high quality reference translation. Large parallel corpora mean more data to estimate the parameters of the translation model, which in turn implies better translation probabilites and higher translation quality. However, finding such bilingual corpora is not always feasible and building one from scratch can be a daunting and expensive task.
 
 Similarly, one of the essential components of Statistical Machine Translation is high quality reference translation. An example of such translations is
